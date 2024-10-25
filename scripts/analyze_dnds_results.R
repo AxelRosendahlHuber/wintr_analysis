@@ -1,14 +1,19 @@
-library(wintr)
+library(data.table)
+library(tidyverse)
 
 # functions for plotting and measuring in the overlap of the new driver gene method:
 cgc_genes = read.delim("~/Downloads/Census_allTue Oct 15 09_47_41 2024.tsv")$Gene.Symbol
 cgc_genes =  c(cgc_genes, "CDKN2A.p16INK4a", "CDKN2A.p14arf")
 
+# read in RDS files: 
+output_files = list.files("~/Nextcloud/Documents/benchmark/2024-10-23/", full.names = TRUE)
+names(output_files) = gsub(".rds", "", basename(output_files))
 
-get_overlap_cgc = function(list, qval_column) {
+
+get_overlap_cgc = function(list, qval_column, ngenes = 150) {
 
   gene_names = list$gene_name
-  overlaps = data.frame(matrix(0, nrow = 75, ncol = 3))
+  overlaps = data.frame(matrix(0, nrow = ngenes, ncol = 3))
   colnames(overlaps) = c("in CGC", "not in CGC", "pval")
   for (i in 1:nrow(overlaps)) {
     nms = gene_names[1:i]
@@ -19,6 +24,81 @@ get_overlap_cgc = function(list, qval_column) {
   overlaps$pval = factor(overlaps$pval, levels = c("pval < 0.05", "qval < 0.05", "non-signif"))
   return(as.data.frame(overlaps))
 }
+
+output_file = output_files[1]
+
+result_list = lapply(output_files, readRDS)
+names(output_files)
+dnds_intron_results = lapply(result_list, \(x) x$globaldnds_intron) |> 
+  rbindlist(idcol = "cohort") |> 
+  mutate(model =  "dndscv_intron")
+
+dnds_results = lapply(result_list, \(x) x$globaldnds) |> 
+  rbindlist(idcol = "cohort") |> 
+  mutate(model = "dndscv")
+
+df_dnds = rbind(dnds_results, dnds_intron_results)
+
+
+df_dnds |> 
+  ggplot(aes(y = mle, x = cohort, , fill = name, shape = model)) + 
+  geom_hline(yintercept = 1, linetype = "dotted", alpha = 0.5) + 
+  geom_point(position = position_dodge(width = 0.5)) +
+  geom_errorbar(aes(ymin = cilow, ymax = cihigh), position = position_dodge(width = 0.5), width = 0.1) + 
+  facet_grid(name ~ . ) +
+  theme_classic() + 
+  cowplot::panel_border() + 
+  scale_shape_manual(values = c(21, 22)) + 
+  theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust=1)) + 
+  labs(y = "dNdS (omega)",x = NULL, title = "PCAWG") + 
+  scale_y_continuous(limits =  c(0, 4))
+
+
+
+# missense
+CGC_intron_loc = lapply(result_list, \(x) get_overlap_cgc(x$loc_intron |> arrange(qmis_loc, pmis_loc) |> select(gene_name, qmis_loc, pmis_loc))) |> 
+  rbindlist(idcol = "name")
+CGC_cv = lapply(result_list, \(x) get_overlap_cgc(x$cv |> arrange(qmis_cv, pmis_cv) |> select(gene_name, qmis_cv, pmis_cv))) |> 
+  rbindlist(idcol = "name")
+CGC_cv_intron = lapply(result_list, \(x) get_overlap_cgc(x$cv_intron |> arrange(qmis_cv, pmis_cv) |> select(gene_name, qmis_cv, pmis_cv))) |> 
+  rbindlist(idcol = "name")
+CGC_models = rbindlist(list(intron_loc = CGC_intron_loc, cv = CGC_cv, cv_intron = CGC_cv_intron), idcol = "model")
+
+CGC_models |> 
+  ggplot(aes(x = `not in CGC`, y = `in CGC`, color = model)) + 
+  facet_wrap(name ~ .) + 
+  geom_line() + 
+  theme_bw()
+
+# truncating
+CGC_intron_loc = lapply(result_list, \(x) get_overlap_cgc(x$loc_intron |> arrange(qtrunc_loc, ptrunc_loc) |> select(gene_name, qtrunc_loc, ptrunc_loc))) |> 
+  rbindlist(idcol = "name")
+CGC_cv = lapply(result_list, \(x) get_overlap_cgc(x$cv |> arrange(qtrunc_cv, ptrunc_cv) |> select(gene_name, qtrunc_cv, ptrunc_cv))) |> 
+  rbindlist(idcol = "name")
+CGC_cv_intron = lapply(result_list, \(x) get_overlap_cgc(x$cv_intron |> arrange(qtrunc_cv, ptrunc_cv) |> select(gene_name, qtrunc_cv, ptrunc_cv))) |> 
+  rbindlist(idcol = "name")
+CGC_models = rbindlist(list(intron_loc = CGC_intron_loc, cv = CGC_cv, cv_intron = CGC_cv_intron), idcol = "model")
+
+CGC_models |> 
+  ggplot(aes(x = `not in CGC`, y = `in CGC`, color = model)) + 
+  facet_wrap(name ~ .) + 
+  geom_line() + 
+  theme_bw()
+
+# all
+CGC_intron_loc = lapply(result_list, \(x) get_overlap_cgc(x$loc_intron |> arrange(qall_loc, pall_loc) |> select(gene_name, qall_loc, pall_loc))) |> 
+  rbindlist(idcol = "name")
+CGC_cv = lapply(result_list, \(x) get_overlap_cgc(x$cv |> arrange(qallsubs_cv, pallsubs_cv) |> select(gene_name, qallsubs_cv, pallsubs_cv))) |> 
+  rbindlist(idcol = "name")
+CGC_cv_intron = lapply(result_list, \(x) get_overlap_cgc(x$cv_intron |> arrange(qallsubs_cv, pallsubs_cv) |> select(gene_name, qallsubs_cv, pallsubs_cv))) |> 
+  rbindlist(idcol = "name")
+CGC_models = rbindlist(list(intron_loc = CGC_intron_loc, cv = CGC_cv, cv_intron = CGC_cv_intron), idcol = "model")
+
+CGC_models |> 
+  ggplot(aes(x = `not in CGC`, y = `in CGC`, color = model)) + 
+  facet_wrap(name ~ .) + 
+  geom_line() + 
+  theme_bw()
 
 # get the overlap for the CGC genes
 list = list(cv = dndscv_vanilla$sel_cv |> arrange(qmis_cv, pmis_cv, gene_name) |> select(gene_name, qmis_cv, pmis_cv),
