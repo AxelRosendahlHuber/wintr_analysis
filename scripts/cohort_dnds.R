@@ -38,7 +38,7 @@ dndscv_vanilla = dndscv(mutations)
 dndscv_intron_results = dndscv_intron(as.data.frame(mutations), max_muts_per_gene_per_sample = 5)
 
 list_results = list(loc = dndscv_vanilla$sel_cv, cv = dndscv_vanilla$sel_cv,
-                    loc_intron = dndscv_intron_results$sel_locin, cv_intron = dndscv_intron_results$sel_cv_intr_neut,
+                    loc_intron = dndscv_intron_results$sel_loc, cv_intron = dndscv_intron_results$sel_cv,
                     globaldnds = dndscv_vanilla$globaldnds,
                     globaldnds_intron = dndscv_intron_results$globaldnds, 
                     muts_per_sample = muts_per_sample)

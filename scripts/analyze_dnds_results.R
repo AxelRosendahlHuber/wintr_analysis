@@ -18,7 +18,6 @@ get_overlap_cgc = function(list, ngenes = 50) {
 
 plot_CGC_plots = function(output_files) {
   
-  
   result_list = lapply(output_files, readRDS)
   names(output_files)
   dnds_intron_results = lapply(result_list, \(x) x$globaldnds_intron) |> 
@@ -101,7 +100,7 @@ cgc_genes = read.delim("~/Downloads/Census_allTue Oct 15 09_47_41 2024.tsv")$Gen
 cgc_genes =  c(cgc_genes, "CDKN2A.p16INK4a", "CDKN2A.p14arf")
 
 # read in PCAWG RDS files: 
-PCAWG_files = list.files("~/Nextcloud/Documents/benchmark/2024-10-23/", full.names = TRUE)
+PCAWG_files = list.files("/workspace/projects/mut_risk/wintr_analysis/output/PCAWG_2024-10-30/", full.names = TRUE)
 names(PCAWG_files) = gsub(".rds", "", basename(PCAWG_files))
 PCAWG_plot_list = plot_CGC_plots(PCAWG_files)
 
@@ -110,7 +109,14 @@ ggsave("plots/PCAWG_truncating_plot.png", PCAWG_plot_list$truncating_plot, width
 ggsave("plots/PCAWG_all_plot.png", PCAWG_plot_list$all_plot, width = 10, height = 8)
 
 
-hartwig_files = list.files("~/Nextcloud/Documents/benchmark/hartwig_2024-10-22/")
+hartwig_files = list.files("/workspace/projects/mut_risk/wintr_analysis/output/HMF_2024-10-30/", full.names = TRUE)
+names(hartwig_files) = gsub(".rds", "", basename(hartwig_files))
+hartwig_plot_list = plot_CGC_plots(hartwig_files)
+
+ggsave("plots/HMF_missense_plot.png", hartwig_plot_list$missense_plot, width = 10, height = 8)
+ggsave("plots/HMF_truncating_plot.png", hartwig_plot_list$truncating_plot, width = 10, height = 8)
+ggsave("plots/HMF_all_plot.png", hartwig_plot_list$all_plot, width = 10, height = 8)
+
 
 
 ## development below
