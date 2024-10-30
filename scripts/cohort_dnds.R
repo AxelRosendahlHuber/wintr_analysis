@@ -18,6 +18,8 @@ day = as.Date(Sys.time(), "%Y%b%e") |> as.character()
 outdir = paste0("output/", cohort_type, "_", day,  "/")
 if (!dir.exists(outdir)) {dir.create(outdir)}
 
+cohort_files
+
 for (name in names(cohort_files)) {
   print(name)
   cohort_file = cohort_files[name]
