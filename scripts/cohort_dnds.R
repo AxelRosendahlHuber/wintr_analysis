@@ -44,6 +44,3 @@ list_results = list(loc = dndscv_vanilla$sel_cv, cv = dndscv_vanilla$sel_cv,
                     muts_per_sample = muts_per_sample)
 
 saveRDS(list_results, paste0(outdir, "/", name, ".rds"))
-
-
-
