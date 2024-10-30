@@ -18,17 +18,22 @@ day = as.Date(Sys.time(), "%Y%b%e") |> as.character()
 outdir = paste0("output/", cohort_type, "_", day,  "/")
 if (!dir.exists(outdir)) {dir.create(outdir)}
 
-# analyze the file from the cohort
+# analyze the file from the cohort  
 cohort_file = cohort_files[as.numeric(args[2])]
-print(name)
-cohort_file = cohort_files[name]
-
+print(cohort_file)
 mutations = data.table::fread(cohort_file)
 
-mutations = mutations |>
-  select(Donor_ID, Chromosome, Start_position, Reference_Allele, Tumor_Seq_Allele2)
+if (cohort_type == "PCAWG") {
+  mutations = mutations |>
+    select(Donor_ID, Chromosome, Start_position, Reference_Allele, Tumor_Seq_Allele2)
+}
+
 
 mutations = as.data.frame(mutations)
+
+muts_per_sample = mutations |>
+  group_by(sampleID) |> 
+  count("n_muts")
 
 dndscv_vanilla = dndscv(mutations)
 dndscv_intron_results = dndscv_intron(as.data.frame(mutations), max_muts_per_gene_per_sample = 5)
