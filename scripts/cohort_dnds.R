@@ -13,7 +13,7 @@ cohort_folder = as.character(args[1])
 cohort_files = list.files(cohort_folder, full.names = TRUE)
 cohort_type = as.character(args[3])
 
-names(cohort_files) = gsub(".tsv.gz", "", basename(cohort_files))
+names(cohort_files) = gsub("\\..*", "", basename(cohort_files))
 day = as.Date(Sys.time(), "%Y%b%e") |> as.character()
 outdir = paste0("output/", cohort_type, "_", day,  "/")
 if (!dir.exists(outdir)) {dir.create(outdir)}
