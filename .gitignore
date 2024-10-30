@@ -11,3 +11,5 @@
 .rdata
 .pdf
 .png
+output/**
+output
