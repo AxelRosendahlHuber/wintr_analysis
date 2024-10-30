@@ -11,10 +11,11 @@ args = commandArgs(trailingOnly = TRUE)
 print(args)
 cohort_folder = as.character(args[1])
 cohort_files = list.files(cohort_folder, pattern = "tsv.gz", full.names = TRUE)
+cohort_type = as.character(args[3])
 
 names(cohort_files) = gsub(".tsv.gz", "", basename(cohort_files))
 day = as.Date(Sys.time(), "%Y%b%e") |> as.character()
-outdir = paste0("output/", day, "/")
+outdir = paste0("output/", cohort_type, "_", day,  "/")
 if (!dir.exists(outdir)) {dir.create(outdir)}
 
 for (name in names(cohort_files)) {
