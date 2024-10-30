@@ -20,6 +20,7 @@ if (!dir.exists(outdir)) {dir.create(outdir)}
 
 # analyze the file from the cohort  
 cohort_file = cohort_files[as.numeric(args[2])]
+name = names(cohort_files)[as.numeric(args[2])]
 print(cohort_file)
 mutations = data.table::fread(cohort_file)
 
@@ -28,9 +29,7 @@ if (cohort_type == "PCAWG") {
     select(Donor_ID, Chromosome, Start_position, Reference_Allele, Tumor_Seq_Allele2)
 }
 
-
 mutations = as.data.frame(mutations)
-
 muts_per_sample = mutations |>
   group_by(sampleID) |> 
   count("n_muts")
