@@ -169,12 +169,82 @@ plot_sig_genes = function(result_list) {
     coord_flip()
 }
 
+
+# plot gene signature-overview: 
+function(result_list) {
+  
+  plot_list = list()
+  for (i in 1:length(result_list)) {
+    print(i)
+    result = result_list[[i]]
+    gene_sigs = list(
+      loc = result$loc |> select(gene_name$)
+      cv = result$cv |> select(gene_name, qallsubs_cv),
+         cv_intron = result$cv_intron |> select(gene_name, qallsubs_cv),
+         intron_loc = result$loc |> select(gene_name, qallsubs_cv)) |> 
+      rbindlist(idcol = "model")  |> 
+      filter(qallsubs_cv < 0.05)
+    plot_list[[i]] = ggplot(gene_sigs, aes(x = gene_name, y = model, fill = gene_name %in%  cgc_genes)) + 
+      geom_tile() + ggtitle(names(result_list)[[i]])
+    
+  }
+}
+
+
+function(result_list) {
+  
+  plot_list = list()
+  total_list = list()
+  for (i in 1:length(result_list)) {
+    print(i)
+    result = result_list[[i]]
+    gene_sigs = list(cv = result$cv |> select(gene_name, qmis_cv),
+                     cv_intron = result$cv_intron |> select(gene_name, qmis_cv),
+                     intron_loc = result$loc_intron |> select(gene_name, qmis_loc) |> dplyr::rename(qmis_cv = qmis_loc)) |> 
+      rbindlist(idcol = "model")  |> 
+      filter(qmis_cv < 0.05) |> 
+      mutate(in_CGC = gene_name %in%  cgc_genes)
+    plot_list[[i]] = ggplot(gene_sigs, aes(x = gene_name, y = model, fill = in_CGC)) + 
+      geom_tile() + ggtitle(names(result_list)[[i]]) + 
+      theme_minimal()
+    total_list[[names(result_list)[[i]]]] = gene_sigs
+  }
+  
+  total_df = rbindlist(total_list, idcol = "cohort")  |>
+    mutate(name = paste0(gsub("HARTWIG_WGS_|2023","", cohort), model)) |> 
+    group_by(gene_name, model) |> 
+    mutate(count = n()) |> 
+    arrange(desc(count)) |> 
+    mutate(gene_name = factor(gene_name, levels = unique(gene_name)))
+  
+  ggplot(total_df, aes(x = fct_reorder(gene_name, count), y = name, fill = in_CGC)) + 
+    geom_tile() + 
+    facet_grid(cohort ~ ., scales = "free_y") + 
+    theme_minimal() + theme(panel.grid = element_blank()) + 
+    theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1), panel.spacing.y = unit(0, "mm")) + 
+    cowplot::panel_border() + 
+    labs(x = NULL, y = NULL)
+}
+counts = total_df |> 
+  filter(in_CGC) |> 
+  group_by(model, cohort) |> 
+  count() |> 
+  pivot_wider(names_from = model, values_from = n)
+table(total_df$model, total_df$in_CGC)
+
+result = result_list[[3]]
+names(result_list)
+
+
+plot_list[[1]]
+
+
 # functions for plotting and measuring in the overlap of the new driver gene method:
 cgc_genes = read.delim("~/Downloads/Census_allTue Oct 15 09_47_41 2024.tsv")$Gene.Symbol
 cgc_genes =  c(cgc_genes, "CDKN2A.p16INK4a", "CDKN2A.p14arf")
 
 basename(folder)
-folder = "/home/arosendahl/Nextcloud/Documents/wintr_analysis/output/CBIOP_2024-11-20/"
+folder = "/home/arosendahl/Nextcloud/Documents/wintr_analysis/output/HARTWIG_2024-11-20//"
 for (folder in dir("~/workspace/projects/mut_risk/wintr_analysis/output/", pattern = "-20", recursive = FALSE, full.names = TRUE)) {
   
   print(folder)
@@ -195,7 +265,9 @@ for (folder in dir("~/workspace/projects/mut_risk/wintr_analysis/output/", patte
   ggsave(paste0("plots/", name, "_n_sig_genes_all.png"), , width = 20, height = 8)
 }
 
+
 # summarize the cohorts 
 
 # next steps: 
 # find out: What are the genes which are more significant across cohorts? Can we make lists of names for each of the different cohorts?
+
